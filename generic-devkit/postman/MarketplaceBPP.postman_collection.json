@@ -1,44 +1,24 @@
 {
   "info": {
     "name": "AI Marketplace — BPP (Provider Portal)",
-    "description": "Provider-facing actions: publish your AI agents to the marketplace.\n\n## Quick Start\n1. Edit the collection variables (click the collection → Variables tab)\n2. Click 'publish single agent' → Send\n3. Verify with 'list agents'\n\nTarget: bpp-api at http://localhost:3002",
+    "description": "Provider workflow: register your company, add agents, then publish to the Beckn network.\n\nFlow: category → provider → agent → publish\n\nTarget: bpp-api at http://localhost:3002",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "1 — Publish Agent",
+      "name": "1 — Setup (Category + Provider)",
       "item": [
         {
-          "name": "publish single agent",
+          "name": "create category",
           "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "// Auto-generate version timestamp",
-                  "pm.collectionVariables.set('publish_timestamp', new Date().toISOString());"
-                ]
-              }
-            },
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Agent saved to DB', function () {",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.db.agentsSaved).to.be.above(0);",
-                  "    // Save the agent ID for later use in BAP select/init/confirm",
-                  "    if (json.db.agentIds && json.db.agentIds.length > 0) {",
-                  "        pm.collectionVariables.set('last_published_agent_id', json.db.agentIds[0]);",
-                  "        console.log('Agent ID saved: ' + json.db.agentIds[0]);",
-                  "    }",
-                  "});",
-                  "pm.test('Catalog published to Fabric', function () {",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.fabric.catalogPublished).to.eql(true);",
+                  "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Category created', function () {",
+                  "    pm.expect(pm.response.json().category_id).to.eql(pm.collectionVariables.get('category_id'));",
                   "});"
                 ]
               }
@@ -49,31 +29,32 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"agents\": [\n    {\n      \"category_id\": \"{{agent_category_id}}\",\n      \"category_display_name\": { \"en\": \"{{agent_category_en}}\", \"es\": \"{{agent_category_es}}\" },\n      \"provider_subscriber_id\": \"{{provider_id}}\",\n      \"provider_bpp_uri\": \"{{provider_uri}}\",\n      \"provider_public_key\": \"{{provider_public_key}}\",\n      \"agent_name\": { \"en\": \"{{agent_name}}\" },\n      \"access_point_url\": \"{{agent_endpoint}}\",\n      \"interaction_type\": \"{{agent_interaction_type}}\",\n      \"version\": \"{{agent_version}}\",\n      \"capabilities\": {{agent_capabilities}},\n      \"input_schema\": {{agent_input_schema}},\n      \"output_schema\": {{agent_output_schema}},\n      \"pricing_model\": { \"type\": \"{{pricing_type}}\", \"value\": {{pricing_value}}, \"currency\": \"{{pricing_currency}}\" }\n    }\n  ]\n}",
+              "raw": "{\n  \"category_id\": \"{{category_id}}\",\n  \"display_name\": { \"en\": \"{{category_name_en}}\", \"es\": \"{{category_name_es}}\" },\n  \"description\": \"{{category_description}}\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
-              "raw": "{{bpp_api_url}}/api/publish",
+              "raw": "{{bpp_api_url}}/api/categories",
               "host": ["{{bpp_api_url}}"],
-              "path": ["api", "publish"]
+              "path": ["api", "categories"]
             },
-            "description": "Publish a single AI agent. Edit the Variables tab to configure your agent, then click Send.\n\nThe agent will be:\n1. Saved/updated in the marketplace database\n2. Published to Fabric catalog (discoverable by BAPs)"
+            "description": "Create or update a category. Uses ON CONFLICT so it's safe to run multiple times."
           },
           "response": []
         },
         {
-          "name": "publish multiple agents (batch)",
+          "name": "create provider",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('All agents saved', function () {",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.db.agentsSaved).to.be.above(0);",
-                  "    console.log('Saved ' + json.db.agentsSaved + ' agents: ' + JSON.stringify(json.db.agentIds));",
+                  "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Provider created', function () {",
+                  "    const provider = pm.response.json().provider;",
+                  "    pm.expect(provider.provider_id).to.be.a('string');",
+                  "    pm.collectionVariables.set('provider_id', provider.provider_id);",
+                  "    console.log('Provider ID saved: ' + provider.provider_id);",
                   "});"
                 ]
               }
@@ -84,25 +65,120 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"agents\": [\n    {\n      \"category_id\": \"AI-SUMMARIZATION\",\n      \"category_display_name\": { \"en\": \"Document Summarizer\", \"es\": \"Resumen de Documentos\" },\n      \"provider_subscriber_id\": \"neuralspark-ai.beckn\",\n      \"provider_bpp_uri\": \"https://api.neuralspark.ai\",\n      \"provider_public_key\": \"ed25519_pub_key_neuralspark\",\n      \"agent_name\": { \"en\": \"DocSummarizer Pro\" },\n      \"access_point_url\": \"https://api.neuralspark.ai/v1/summarize\",\n      \"interaction_type\": \"sync\",\n      \"version\": \"1.0.0\",\n      \"capabilities\": [\"summarization\", \"bullet-points\", \"executive-summary\"],\n      \"input_schema\": { \"type\": \"object\", \"properties\": { \"text\": { \"type\": \"string\" } } },\n      \"output_schema\": { \"type\": \"object\", \"properties\": { \"summary\": { \"type\": \"string\" } } },\n      \"pricing_model\": { \"type\": \"per_request\", \"value\": 0.05, \"currency\": \"USD\" }\n    },\n    {\n      \"category_id\": \"AI-EXTRACTION\",\n      \"category_display_name\": { \"en\": \"Data Extraction\", \"es\": \"Extracción de Datos\" },\n      \"provider_subscriber_id\": \"neuralspark-ai.beckn\",\n      \"provider_bpp_uri\": \"https://api.neuralspark.ai\",\n      \"provider_public_key\": \"ed25519_pub_key_neuralspark\",\n      \"agent_name\": { \"en\": \"DataExtract Engine\" },\n      \"access_point_url\": \"https://api.neuralspark.ai/v1/extract\",\n      \"interaction_type\": \"sync\",\n      \"version\": \"1.0.0\",\n      \"capabilities\": [\"extraction\", \"json-output\", \"entity-recognition\"],\n      \"input_schema\": { \"type\": \"object\", \"properties\": { \"text\": { \"type\": \"string\" } } },\n      \"output_schema\": { \"type\": \"object\", \"properties\": { \"entities\": { \"type\": \"array\" } } },\n      \"pricing_model\": { \"type\": \"per_request\", \"value\": 0.08, \"currency\": \"USD\" }\n    },\n    {\n      \"category_id\": \"AI-TRANSLATION\",\n      \"category_display_name\": { \"en\": \"Translation\", \"es\": \"Traducción\" },\n      \"provider_subscriber_id\": \"lingualab.beckn\",\n      \"provider_bpp_uri\": \"https://api.lingualab.io\",\n      \"provider_public_key\": \"ed25519_pub_key_lingualab\",\n      \"agent_name\": { \"en\": \"PolyLang Translator\" },\n      \"access_point_url\": \"https://api.lingualab.io/v1/translate\",\n      \"interaction_type\": \"sync\",\n      \"version\": \"1.0.0\",\n      \"capabilities\": [\"translation\", \"multi-language\", \"context-aware\"],\n      \"input_schema\": { \"type\": \"object\", \"properties\": { \"text\": { \"type\": \"string\" }, \"target_lang\": { \"type\": \"string\" } } },\n      \"output_schema\": { \"type\": \"object\", \"properties\": { \"translated\": { \"type\": \"string\" } } },\n      \"pricing_model\": { \"type\": \"per_request\", \"value\": 0.03, \"currency\": \"USD\" }\n    },\n    {\n      \"category_id\": \"AI-CODE-GENERATION\",\n      \"category_display_name\": { \"en\": \"Code Generation\", \"es\": \"Generación de Código\" },\n      \"provider_subscriber_id\": \"lingualab.beckn\",\n      \"provider_bpp_uri\": \"https://api.lingualab.io\",\n      \"provider_public_key\": \"ed25519_pub_key_lingualab\",\n      \"agent_name\": { \"en\": \"CodeAssist AI\" },\n      \"access_point_url\": \"https://api.lingualab.io/v1/codegen\",\n      \"interaction_type\": \"sync\",\n      \"version\": \"1.0.0\",\n      \"capabilities\": [\"code-generation\", \"debugging\", \"refactoring\"],\n      \"input_schema\": { \"type\": \"object\", \"properties\": { \"prompt\": { \"type\": \"string\" }, \"language\": { \"type\": \"string\" } } },\n      \"output_schema\": { \"type\": \"object\", \"properties\": { \"code\": { \"type\": \"string\" } } },\n      \"pricing_model\": { \"type\": \"per_request\", \"value\": 0.10, \"currency\": \"USD\" }\n    }\n  ]\n}",
+              "raw": "{\n  \"subscriber_id\": \"{{provider_subscriber_id}}\",\n  \"bpp_uri\": \"{{provider_bpp_uri}}\",\n  \"public_key\": \"{{provider_public_key}}\",\n  \"organization_details\": {\n    \"name\": \"{{provider_org_name}}\",\n    \"contact_email\": \"{{provider_contact_email}}\"\n  }\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
-              "raw": "{{bpp_api_url}}/api/publish",
+              "raw": "{{bpp_api_url}}/api/providers",
               "host": ["{{bpp_api_url}}"],
-              "path": ["api", "publish"]
+              "path": ["api", "providers"]
             },
-            "description": "Publish multiple agents at once. Edit the body directly to add/remove agents."
+            "description": "Register your company as a provider. The response includes provider_id which is auto-saved for the next step."
+          },
+          "response": []
+        },
+        {
+          "name": "list categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{bpp_api_url}}/api/categories",
+              "host": ["{{bpp_api_url}}"],
+              "path": ["api", "categories"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "list providers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{bpp_api_url}}/api/providers",
+              "host": ["{{bpp_api_url}}"],
+              "path": ["api", "providers"]
+            }
           },
           "response": []
         }
       ]
     },
     {
-      "name": "2 — Verify",
+      "name": "2 — Register Agent",
       "item": [
         {
-          "name": "list my agents",
+          "name": "create agent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Agent created', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.agent_id).to.be.a('string');",
+                  "    pm.collectionVariables.set('last_agent_id', json.agent_id);",
+                  "    console.log('Agent ID saved: ' + json.agent_id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider_id\": \"{{provider_id}}\",\n  \"category_id\": \"{{category_id}}\",\n  \"agent_name\": { \"en\": \"{{agent_name}}\" },\n  \"access_point_url\": \"{{agent_endpoint}}\",\n  \"interaction_type\": \"{{agent_interaction_type}}\",\n  \"version\": \"{{agent_version}}\",\n  \"capabilities\": {{agent_capabilities}},\n  \"input_schema\": {{agent_input_schema}},\n  \"output_schema\": {{agent_output_schema}},\n  \"pricing_model\": { \"type\": \"{{pricing_type}}\", \"value\": {{pricing_value}}, \"currency\": \"{{pricing_currency}}\" }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{bpp_api_url}}/api/agents",
+              "host": ["{{bpp_api_url}}"],
+              "path": ["api", "agents"]
+            },
+            "description": "Register an AI agent. Requires provider_id (from step 1) and category_id to exist.\n\nThe provider_id is auto-filled from the 'create provider' response."
+          },
+          "response": []
+        },
+        {
+          "name": "update agent",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pricing_model\": { \"type\": \"per_request\", \"value\": 0.10, \"currency\": \"USD\" },\n  \"version\": \"1.1.0\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{bpp_api_url}}/api/agents/{{last_agent_id}}",
+              "host": ["{{bpp_api_url}}"],
+              "path": ["api", "agents", "{{last_agent_id}}"]
+            },
+            "description": "Update specific fields of an agent. Only send the fields you want to change."
+          },
+          "response": []
+        },
+        {
+          "name": "deactivate agent",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{bpp_api_url}}/api/agents/{{last_agent_id}}",
+              "host": ["{{bpp_api_url}}"],
+              "path": ["api", "agents", "{{last_agent_id}}"]
+            },
+            "description": "Deactivates an agent (sets status=inactive). Does not delete data."
+          },
+          "response": []
+        },
+        {
+          "name": "list agents",
           "event": [
             {
               "listen": "test",
@@ -110,12 +186,9 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Has agents', function () {",
-                  "    const agents = pm.response.json();",
-                  "    pm.expect(agents.length).to.be.above(0);",
-                  "    console.log('Total agents in marketplace: ' + agents.length);",
-                  "    agents.forEach(a => console.log('  - ' + a.name + ' (' + a.category + ') $' + a.price_amount));",
-                  "});"
+                  "const agents = pm.response.json();",
+                  "console.log('Total agents: ' + agents.length);",
+                  "agents.forEach(a => console.log('  ' + a.agent_id + ' | ' + (a.agent_name.en || a.agent_name) + ' | ' + a.status));"
                 ]
               }
             }
@@ -127,25 +200,55 @@
               "raw": "{{bpp_api_url}}/api/agents",
               "host": ["{{bpp_api_url}}"],
               "path": ["api", "agents"]
-            },
-            "description": "List all agents in the marketplace database. Use after publish to verify your agents were registered."
+            }
           },
           "response": []
-        },
+        }
+      ]
+    },
+    {
+      "name": "3 — Publish to Network",
+      "item": [
         {
-          "name": "list transactions",
+          "name": "publish catalog to Fabric",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Catalog published', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.fabric.catalogPublished).to.eql(true);",
+                  "    console.log('Published ' + json.fabric.agentsInCatalog + ' agents to Fabric');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{bpp_api_url}}/api/transactions",
-              "host": ["{{bpp_api_url}}"],
-              "path": ["api", "transactions"]
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": { "raw": { "language": "json" } }
             },
-            "description": "List all transactions (select/init/confirm activity from BAPs)."
+            "url": {
+              "raw": "{{bpp_api_url}}/api/publish",
+              "host": ["{{bpp_api_url}}"],
+              "path": ["api", "publish"]
+            },
+            "description": "Publishes ALL active agents from the database to Fabric Catalog Service.\n\nNo body needed — reads directly from the database."
           },
           "response": []
-        },
+        }
+      ]
+    },
+    {
+      "name": "4 — Debug",
+      "item": [
         {
           "name": "health check",
           "request": {
@@ -158,28 +261,45 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "list transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{bpp_api_url}}/api/transactions",
+              "host": ["{{bpp_api_url}}"],
+              "path": ["api", "transactions"]
+            }
+          },
+          "response": []
         }
       ]
     }
   ],
   "variable": [
     { "key": "bpp_api_url", "value": "http://localhost:3002", "description": "bpp-api URL" },
-    { "key": "provider_id", "value": "my-company.beckn", "description": "Your Beckn subscriber ID (unique per company)" },
-    { "key": "provider_uri", "value": "https://api.my-company.com", "description": "Your API base URL" },
+    { "key": "category_id", "value": "AI-SUMMARIZATION", "description": "Category ID" },
+    { "key": "category_name_en", "value": "Document Summarizer", "description": "Category name (English)" },
+    { "key": "category_name_es", "value": "Resumen de Documentos", "description": "Category name (Spanish)" },
+    { "key": "category_description", "value": "AI-powered document summarization", "description": "Category description" },
+    { "key": "provider_subscriber_id", "value": "my-company.beckn", "description": "Your Beckn subscriber ID" },
+    { "key": "provider_bpp_uri", "value": "https://api.my-company.com", "description": "Your API base URL" },
     { "key": "provider_public_key", "value": "ed25519_pub_key_placeholder", "description": "Your Ed25519 public key" },
+    { "key": "provider_org_name", "value": "My AI Company", "description": "Organization name" },
+    { "key": "provider_contact_email", "value": "admin@my-company.com", "description": "Contact email" },
+    { "key": "provider_id", "value": "", "description": "Auto-filled after creating provider" },
     { "key": "agent_name", "value": "My AI Agent", "description": "Agent display name" },
-    { "key": "agent_category_id", "value": "AI-SUMMARIZATION", "description": "Category ID (AI-SUMMARIZATION, AI-EXTRACTION, AI-TRANSLATION, AI-CODE-GENERATION, or create new)" },
-    { "key": "agent_category_en", "value": "Document Summarizer", "description": "Category display name (English)" },
-    { "key": "agent_category_es", "value": "Resumen de Documentos", "description": "Category display name (Spanish)" },
-    { "key": "agent_endpoint", "value": "https://api.my-company.com/v1/agent", "description": "Agent API endpoint URL" },
+    { "key": "agent_endpoint", "value": "https://api.my-company.com/v1/agent", "description": "Agent API endpoint" },
     { "key": "agent_interaction_type", "value": "sync", "description": "sync | async | streaming" },
     { "key": "agent_version", "value": "1.0.0", "description": "Semantic version" },
-    { "key": "agent_capabilities", "value": "[\"summarization\", \"bullet-points\"]", "description": "JSON array of capability tags" },
-    { "key": "agent_input_schema", "value": "{ \"type\": \"object\", \"properties\": { \"text\": { \"type\": \"string\" } } }", "description": "JSON Schema for agent input" },
-    { "key": "agent_output_schema", "value": "{ \"type\": \"object\", \"properties\": { \"result\": { \"type\": \"string\" } } }", "description": "JSON Schema for agent output" },
+    { "key": "agent_capabilities", "value": "[\"summarization\", \"bullet-points\"]", "description": "JSON array of capabilities" },
+    { "key": "agent_input_schema", "value": "{ \"type\": \"object\", \"properties\": { \"text\": { \"type\": \"string\" } } }", "description": "JSON Schema for input" },
+    { "key": "agent_output_schema", "value": "{ \"type\": \"object\", \"properties\": { \"result\": { \"type\": \"string\" } } }", "description": "JSON Schema for output" },
     { "key": "pricing_type", "value": "per_request", "description": "Pricing model type" },
     { "key": "pricing_value", "value": "0.05", "description": "Price per request" },
     { "key": "pricing_currency", "value": "USD", "description": "Currency code" },
-    { "key": "last_published_agent_id", "value": "", "description": "Auto-filled after publish — use in BAP collection" }
+    { "key": "last_agent_id", "value": "", "description": "Auto-filled after creating agent" }
   ]
 }
