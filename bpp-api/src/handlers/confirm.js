@@ -103,7 +103,7 @@ async function callLLM(agent, userInput) {
   try {
     const { data } = await axios.post(
       LLM_SERVICE_URL,
-      { prompt: `You are "${agent.name}", an AI agent specialized in ${agent.category}.\n\n${userInput}` },
+      { prompt: `simulate you are "${agent.name}", an AI agent specialized in ${agent.category}. do that work to this user input:\n\n${userInput}` },
       { timeout: 120_000 }
     );
 
