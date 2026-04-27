@@ -1,30 +1,13 @@
 const pool = require("../db");
-const { buildResponseContext, sendCallback } = require("../beckn");
-
-const AGENT_BY_ID = `
-  SELECT
-    a.agent_id            AS id,
-    a.agent_name->>'en'   AS name,
-    a.category_id         AS category,
-    array_to_string(a.capabilities, ', ') AS description,
-    a.pricing_model->>'value'    AS price_amount,
-    COALESCE(a.pricing_model->>'currency', 'USD') AS price_currency,
-    a.access_point_url,
-    p.provider_id,
-    p.subscriber_id       AS provider_name
-  FROM ai_agents a
-  JOIN ai_providers p ON a.provider_id = p.provider_id
-  WHERE a.agent_id = $1`;
+const { buildResponseContext, sendCallback, findAgent } = require("../beckn");
 
 async function handleConfirm(context, message) {
   const resourceId =
-    message?.contract?.commitments?.[0]?.resources?.[0]?.id || null;
+    message?.contract?.commitments?.[0]?.resources?.[0]?.id ||
+    message?.contract?.commitments?.[0]?.descriptor?.code ||
+    null;
 
-  let agent = null;
-  if (resourceId) {
-    const { rows } = await pool.query(AGENT_BY_ID, [resourceId]);
-    agent = rows[0] || null;
-  }
+  const agent = await findAgent(pool, resourceId);
 
   if (!agent) {
     const responseContext = buildResponseContext(context, "on_confirm");
@@ -89,11 +72,10 @@ async function handleConfirm(context, message) {
       performance: [
         {
           id: "perf-001",
-          performanceAttributes: {
-            executionStatus: "COMPLETED",
-            output: llmOutput,
-            category: agent.category,
-            agentId: agent.id,
+          status: {
+            name: "Agent Execution",
+            code: "COMPLETED",
+            longDesc: llmOutput,
           },
         },
       ],

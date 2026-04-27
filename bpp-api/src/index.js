@@ -243,17 +243,16 @@ const webhookHandlers = {
   on_publish: handleOnPublish,
 };
 
-app.post("/api/webhook", async (req, res) => {
+app.post("/api/webhook/:action?", async (req, res) => {
   const { context, message } = req.body;
 
-  if (!context?.action) {
+  const action = req.params.action || context?.action;
+  if (!action) {
     return res.status(400).json({
       message: { ack: { status: "NACK" } },
       error: { code: "40001", message: "Missing context.action" },
     });
   }
-
-  const action = context.action;
   console.log(`[webhook] Received action: ${action} | txnId: ${context.transactionId}`);
 
   const handler = webhookHandlers[action];

@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "AI Marketplace — BAP (Discover → Select → Init → Confirm)",
-    "description": "BAP-side: full transaction flow for the AI Agent Marketplace.\n\nRun [BPP] publish FIRST, then run these in order.\n\nSet bap_adapter_url = http://localhost:8081/bap/caller before running.",
+    "description": "BAP-side: full transaction flow for the AI Agent Marketplace.\n\nRun [BPP] publish FIRST, then run these in order.\n\nAgent IDs reference real UUIDs from the seeded database.\nSet bap_adapter_url = http://localhost:8081/bap/caller before running.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -39,7 +39,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"context\": {\n    \"networkId\": \"beckn.one/testnet\",\n    \"action\": \"select\",\n    \"version\": \"2.0.0\",\n    \"bapId\": \"{{bap_id}}\",\n    \"bapUri\": \"{{bap_uri}}\",\n    \"bppId\": \"{{bpp_id}}\",\n    \"bppUri\": \"{{bpp_uri}}\",\n    \"transactionId\": \"{{transaction_id}}\",\n    \"messageId\": \"{{$guid}}\",\n    \"timestamp\": \"{{$isoTimestamp}}\",\n    \"ttl\": \"PT30S\",\n    \"schemaContext\": []\n  },\n  \"message\": {\n    \"contract\": {\n      \"id\": \"draft-contract-0001\",\n      \"participants\": [\n        {\n          \"id\": \"participant-buyer-001\",\n          \"descriptor\": { \"name\": \"John Doe\", \"code\": \"buyer\" }\n        }\n      ],\n      \"commitments\": [\n        {\n          \"id\": \"commitment-001\",\n          \"descriptor\": { \"name\": \"AI Summarization\", \"code\": \"agent-summarizer-01\" },\n          \"status\": { \"code\": \"DRAFT\" },\n          \"resources\": [\n            {\n              \"id\": \"agent-summarizer-01\",\n              \"descriptor\": { \"name\": \"DocSummarizer Pro\", \"code\": \"agent-summarizer-01\" },\n              \"quantity\": { \"unitQuantity\": 1, \"unitCode\": \"UNIT\" }\n            }\n          ],\n          \"offer\": {\n            \"id\": \"OFFER-SUMMARIZER-01\",\n            \"resourceIds\": [\"agent-summarizer-01\"]\n          }\n        }\n      ],\n      \"consideration\": [\n        {\n          \"id\": \"consideration-001\",\n          \"price\": { \"currency\": \"USD\", \"value\": \"0.05\" },\n          \"status\": { \"code\": \"DRAFT\" }\n        }\n      ]\n    }\n  }\n}",
+              "raw": "{\n  \"context\": {\n    \"networkId\": \"beckn.one/testnet\",\n    \"action\": \"select\",\n    \"version\": \"2.0.0\",\n    \"bapId\": \"{{bap_id}}\",\n    \"bapUri\": \"{{bap_uri}}\",\n    \"bppId\": \"{{bpp_id}}\",\n    \"bppUri\": \"{{bpp_uri}}\",\n    \"transactionId\": \"{{transaction_id}}\",\n    \"messageId\": \"{{$guid}}\",\n    \"timestamp\": \"{{$isoTimestamp}}\",\n    \"ttl\": \"PT30S\",\n    \"schemaContext\": []\n  },\n  \"message\": {\n    \"contract\": {\n      \"id\": \"draft-contract-0001\",\n      \"participants\": [\n        {\n          \"id\": \"participant-buyer-001\",\n          \"descriptor\": { \"name\": \"John Doe\", \"code\": \"buyer\" }\n        }\n      ],\n      \"commitments\": [\n        {\n          \"id\": \"commitment-001\",\n          \"descriptor\": { \"name\": \"DocSummarizer Pro\", \"code\": \"AI-SUMMARIZATION\" },\n          \"status\": { \"code\": \"DRAFT\" },\n          \"resources\": [\n            {\n              \"id\": \"{{agent_id}}\",\n              \"descriptor\": { \"name\": \"DocSummarizer Pro\", \"code\": \"AI-SUMMARIZATION\" },\n              \"quantity\": { \"unitQuantity\": 1, \"unitCode\": \"EXECUTION\" }\n            }\n          ],\n          \"offer\": {\n            \"id\": \"offer-{{agent_id}}\",\n            \"resourceIds\": [\"{{agent_id}}\"]\n          }\n        }\n      ],\n      \"consideration\": [\n        {\n          \"id\": \"consideration-001\",\n          \"price\": { \"currency\": \"USD\", \"value\": \"0.05\" },\n          \"status\": { \"code\": \"DRAFT\" }\n        }\n      ]\n    }\n  }\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -58,7 +58,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"context\": {\n    \"networkId\": \"beckn.one/testnet\",\n    \"action\": \"init\",\n    \"version\": \"2.0.0\",\n    \"bapId\": \"{{bap_id}}\",\n    \"bapUri\": \"{{bap_uri}}\",\n    \"bppId\": \"{{bpp_id}}\",\n    \"bppUri\": \"{{bpp_uri}}\",\n    \"transactionId\": \"{{transaction_id}}\",\n    \"messageId\": \"{{$guid}}\",\n    \"timestamp\": \"{{$isoTimestamp}}\",\n    \"ttl\": \"PT30S\"\n  },\n  \"message\": {\n    \"contract\": {\n      \"commitments\": [\n        {\n          \"status\": { \"descriptor\": { \"code\": \"DRAFT\" } },\n          \"resources\": [\n            {\n              \"id\": \"agent-summarizer-01\",\n              \"descriptor\": { \"name\": \"DocSummarizer Pro\", \"code\": \"agent-summarizer-01\" },\n              \"quantity\": { \"unitQuantity\": 1, \"unitCode\": \"UNIT\" }\n            }\n          ],\n          \"offer\": {\n            \"id\": \"OFFER-SUMMARIZER-01\",\n            \"resourceIds\": [\"agent-summarizer-01\"]\n          }\n        }\n      ],\n      \"participants\": [\n        {\n          \"id\": \"participant-buyer-001\",\n          \"descriptor\": { \"name\": \"John Doe\", \"code\": \"buyer\" }\n        }\n      ],\n      \"performance\": [{ \"id\": \"perf-001\" }],\n      \"settlements\": [{ \"id\": \"settlement-001\", \"status\": \"DRAFT\" }]\n    }\n  }\n}",
+              "raw": "{\n  \"context\": {\n    \"networkId\": \"beckn.one/testnet\",\n    \"action\": \"init\",\n    \"version\": \"2.0.0\",\n    \"bapId\": \"{{bap_id}}\",\n    \"bapUri\": \"{{bap_uri}}\",\n    \"bppId\": \"{{bpp_id}}\",\n    \"bppUri\": \"{{bpp_uri}}\",\n    \"transactionId\": \"{{transaction_id}}\",\n    \"messageId\": \"{{$guid}}\",\n    \"timestamp\": \"{{$isoTimestamp}}\",\n    \"ttl\": \"PT30S\"\n  },\n  \"message\": {\n    \"contract\": {\n      \"commitments\": [\n        {\n          \"status\": { \"descriptor\": { \"code\": \"DRAFT\" } },\n          \"resources\": [\n            {\n              \"id\": \"{{agent_id}}\",\n              \"descriptor\": { \"name\": \"DocSummarizer Pro\", \"code\": \"AI-SUMMARIZATION\" },\n              \"quantity\": { \"unitQuantity\": 1, \"unitCode\": \"EXECUTION\" }\n            }\n          ],\n          \"offer\": {\n            \"id\": \"offer-{{agent_id}}\",\n            \"resourceIds\": [\"{{agent_id}}\"]\n          }\n        }\n      ],\n      \"participants\": [\n        {\n          \"id\": \"participant-buyer-001\",\n          \"descriptor\": { \"name\": \"John Doe\", \"code\": \"buyer\" }\n        }\n      ],\n      \"performance\": [{ \"id\": \"perf-001\" }],\n      \"settlements\": [{ \"id\": \"settlement-001\", \"status\": \"DRAFT\" }]\n    }\n  }\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -66,7 +66,7 @@
               "host": ["{{bap_adapter_url}}"],
               "path": ["init"]
             },
-            "description": "Initialize transaction for DocSummarizer Pro. Creates transaction record in bpp-api PostgreSQL (status=INITIALIZED). Response arrives as on_init callback."
+            "description": "Initialize transaction for DocSummarizer Pro. Creates transaction record in bpp-api PostgreSQL (status=pending). Response arrives as on_init callback."
           },
           "response": []
         },
@@ -77,7 +77,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"context\": {\n    \"networkId\": \"beckn.one/testnet\",\n    \"action\": \"confirm\",\n    \"version\": \"2.0.0\",\n    \"bapId\": \"{{bap_id}}\",\n    \"bapUri\": \"{{bap_uri}}\",\n    \"bppId\": \"{{bpp_id}}\",\n    \"bppUri\": \"{{bpp_uri}}\",\n    \"transactionId\": \"{{transaction_id}}\",\n    \"messageId\": \"{{$guid}}\",\n    \"timestamp\": \"{{$isoTimestamp}}\",\n    \"ttl\": \"PT30S\"\n  },\n  \"message\": {\n    \"contract\": {\n      \"id\": \"draft-contract-0001\",\n      \"commitments\": [\n        {\n          \"id\": \"commitment-001\",\n          \"status\": { \"descriptor\": { \"code\": \"DRAFT\" } },\n          \"resources\": [\n            {\n              \"id\": \"agent-summarizer-01\",\n              \"descriptor\": { \"name\": \"DocSummarizer Pro\", \"code\": \"agent-summarizer-01\" },\n              \"quantity\": { \"unitQuantity\": 1, \"unitCode\": \"UNIT\" }\n            }\n          ],\n          \"offer\": {\n            \"id\": \"OFFER-SUMMARIZER-01\",\n            \"resourceIds\": [\"agent-summarizer-01\"]\n          }\n        }\n      ],\n      \"participants\": [\n        {\n          \"id\": \"participant-buyer-001\",\n          \"descriptor\": { \"name\": \"John Doe\", \"code\": \"buyer\" }\n        }\n      ],\n      \"performance\": [{ \"id\": \"perf-001\" }],\n      \"settlements\": [{ \"id\": \"settlement-001\", \"status\": \"COMPLETE\" }]\n    }\n  }\n}",
+              "raw": "{\n  \"context\": {\n    \"networkId\": \"beckn.one/testnet\",\n    \"action\": \"confirm\",\n    \"version\": \"2.0.0\",\n    \"bapId\": \"{{bap_id}}\",\n    \"bapUri\": \"{{bap_uri}}\",\n    \"bppId\": \"{{bpp_id}}\",\n    \"bppUri\": \"{{bpp_uri}}\",\n    \"transactionId\": \"{{transaction_id}}\",\n    \"messageId\": \"{{$guid}}\",\n    \"timestamp\": \"{{$isoTimestamp}}\",\n    \"ttl\": \"PT30S\"\n  },\n  \"message\": {\n    \"contract\": {\n      \"id\": \"draft-contract-0001\",\n      \"commitments\": [\n        {\n          \"id\": \"commitment-001\",\n          \"status\": { \"descriptor\": { \"code\": \"DRAFT\" } },\n          \"resources\": [\n            {\n              \"id\": \"{{agent_id}}\",\n              \"descriptor\": {\n                \"name\": \"DocSummarizer Pro\",\n                \"code\": \"AI-SUMMARIZATION\",\n                \"longDesc\": \"Artificial intelligence (AI) is the simulation of human intelligence processes by computer systems. These processes include learning, reasoning, and self-correction. AI is being used across industries including healthcare, finance, and transportation. Machine learning, a subset of AI, enables systems to learn from data without being explicitly programmed.\"\n              },\n              \"quantity\": { \"unitQuantity\": 1, \"unitCode\": \"EXECUTION\" }\n            }\n          ],\n          \"offer\": {\n            \"id\": \"offer-{{agent_id}}\",\n            \"resourceIds\": [\"{{agent_id}}\"]\n          }\n        }\n      ],\n      \"participants\": [\n        {\n          \"id\": \"participant-buyer-001\",\n          \"descriptor\": { \"name\": \"John Doe\", \"code\": \"buyer\" }\n        }\n      ],\n      \"performance\": [{ \"id\": \"perf-001\" }],\n      \"settlements\": [{ \"id\": \"settlement-001\", \"status\": \"COMPLETE\" }]\n    }\n  }\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -85,7 +85,7 @@
               "host": ["{{bap_adapter_url}}"],
               "path": ["confirm"]
             },
-            "description": "Confirm and execute DocSummarizer Pro. bpp-api calls LLM (currently mock), updates transaction to COMPLETED. Response arrives as on_confirm callback with LLM output."
+            "description": "Confirm and execute DocSummarizer Pro. bpp-api calls LLM (currently mock), updates transaction to COMPLETED. Response arrives as on_confirm callback with LLM output.\n\nThe userInput field in the descriptor contains the text to summarize."
           },
           "response": []
         }
@@ -126,6 +126,7 @@
     { "key": "bap_uri", "value": "http://onix-bap:8081/bap/receiver" },
     { "key": "bpp_id", "value": "bpp.example.com" },
     { "key": "bpp_uri", "value": "http://onix-bpp:8082/bpp/receiver" },
-    { "key": "transaction_id", "value": "" }
+    { "key": "transaction_id", "value": "" },
+    { "key": "agent_id", "value": "adab8aa1-18ea-4ea6-91ed-090d4de0f1c1", "description": "DocSummarizer Pro UUID from seeded DB" }
   ]
 }

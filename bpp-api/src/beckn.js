@@ -44,4 +44,48 @@ async function sendCallback(onAction, context, message) {
   }
 }
 
-module.exports = { buildResponseContext, sendCallback };
+/**
+ * UUID v4 regex for checking if a string is a valid UUID.
+ */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Find an agent by UUID or by descriptor code (e.g. "agent-summarizer-01").
+ * Returns the first matching active agent, or null.
+ */
+async function findAgent(pool, resourceId, extraColumns = "") {
+  if (!resourceId) return null;
+
+  const select = `
+    SELECT
+      a.agent_id            AS id,
+      a.agent_name->>'en'   AS name,
+      a.category_id         AS category,
+      array_to_string(a.capabilities, ', ') AS description,
+      a.pricing_model->>'value'    AS price_amount,
+      COALESCE(a.pricing_model->>'currency', 'USD') AS price_currency,
+      a.access_point_url,
+      a.interaction_type,
+      p.provider_id,
+      p.subscriber_id       AS provider_name,
+      p.trust_score_aggregate AS trust_score
+    FROM ai_agents a
+    JOIN ai_providers p ON a.provider_id = p.provider_id`;
+
+  if (UUID_RE.test(resourceId)) {
+    const { rows } = await pool.query(`${select} WHERE a.agent_id = $1`, [resourceId]);
+    return rows[0] || null;
+  }
+
+  // Fallback: search by descriptor code / category+name pattern
+  const search = `%${resourceId}%`;
+  const { rows } = await pool.query(
+    `${select} WHERE a.status = 'active'
+       AND (a.agent_name->>'en' ILIKE $1 OR a.category_id ILIKE $1)
+     LIMIT 1`,
+    [search]
+  );
+  return rows[0] || null;
+}
+
+module.exports = { buildResponseContext, sendCallback, findAgent };
