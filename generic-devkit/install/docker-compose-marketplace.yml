@@ -119,6 +119,10 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=PassTest12?
       - ONIX_BPP_CALLER=http://onix-bpp:8082/bpp/caller
+      # ── LLM Service URL (llm/server.js on host machine) ──
+      - LLM_SERVICE_URL=http://host.docker.internal:3010/api/chat
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "3002:3002"
     healthcheck:
